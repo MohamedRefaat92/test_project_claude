@@ -3,7 +3,7 @@ From: rocker/rstudio:4.5.0
 
 %labels
     Author      Mohamed Shoeb
-    Version     1.1.0
+    Version     1.1.1
     Description Bioinformatics container: RStudio Server + JupyterLab + common tools
     R_Version   4.5.0
     Python      3.11 (via Mambaforge)
