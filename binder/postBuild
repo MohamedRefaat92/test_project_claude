@@ -33,7 +33,7 @@ lib <- Sys.getenv("R_LIBS_USER")
 cat("Installing R packages into:", lib, "\n")
 
 options(
-  repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"),
+  repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/2024-10-28"),
   Ncpus = 2,
   warn  = 1
 )
@@ -43,7 +43,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager", lib = lib)
 }
 library(BiocManager)
-BiocManager::install(version = "3.19", ask = FALSE, update = FALSE, lib = lib)
+BiocManager::install(version = "3.18", ask = FALSE, update = FALSE, lib = lib)
 
 # CRAN packages
 cran_pkgs <- c(
