@@ -41,16 +41,6 @@ dependencies:
   - pyarrow=17.0.0
   - openpyxl=3.1.5
 
-  # Single-cell analysis (Python) — scanpy only; scvi-tools excluded (PyTorch ~700MB)
-  - scanpy=1.10.2
-  - anndata=0.10.8
-  - leidenalg=0.11.0
-  - python-igraph=1.0.0
-
-  # Bioinformatics Python (analysis tier only — no alignment tools)
-  - biopython=1.84
-  - htseq=2.0.5
-
   # Utilities
   - tqdm=4.66.5
   - pyyaml=6.0.2
@@ -100,6 +90,3 @@ dependencies:
   # Bioconductor — visualization
   - bioconductor-complexheatmap
   - bioconductor-enhancedvolcano
-
-  - pip:
-    - pydeseq2==0.4.10
