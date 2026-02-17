@@ -1,11 +1,11 @@
 Bootstrap: docker
-From: rocker/rstudio:4.4.2
+From: rocker/rstudio:4.5.0
 
 %labels
     Author      Mohamed Shoeb
-    Version     1.0.0
+    Version     1.1.0
     Description Bioinformatics container: RStudio Server + JupyterLab + common tools
-    R_Version   4.4.2
+    R_Version   4.5.0
     Python      3.11 (via Mambaforge)
     Build_Date  2026-02-17
 
@@ -24,7 +24,7 @@ From: rocker/rstudio:4.4.2
       QC/Trim:      FastQC, MultiQC, fastp, Trim Galore, cutadapt
       Utilities:    samtools, bedtools, tabix, mosdepth
 
-    R packages (Bioconductor 3.19):
+    R packages (Bioconductor 3.22):
       RNA-seq:      DESeq2, edgeR, limma, tximport
       Single-cell:  Seurat, SingleCellExperiment, scran, scater
       Annotation:   clusterProfiler, fgsea, GSVA, org.Hs.eg.db

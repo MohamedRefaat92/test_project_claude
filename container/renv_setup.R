@@ -29,7 +29,7 @@ options(
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager")
 }
-BiocManager::install(version = "3.19", ask = FALSE, update = FALSE)
+BiocManager::install(version = "3.22", ask = FALSE, update = FALSE)
 
 # ---------------------------------------------------------------
 # CRAN packages

@@ -22,11 +22,11 @@ wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
     | gpg --dearmor \
     | tee /etc/apt/trusted.gpg.d/cran_ubuntu_key.gpg > /dev/null
 
-echo "deb https://cloud.r-project.org/bin/linux/ubuntu jammy-cran44/" \
-    | tee /etc/apt/sources.list.d/cran-r44.list
+echo "deb https://cloud.r-project.org/bin/linux/ubuntu jammy-cran45/" \
+    | tee /etc/apt/sources.list.d/cran-r45.list
 
 sudo apt-get update -qq
-sudo apt-get install -y --no-install-recommends r-base=4.4* r-base-dev=4.4*
+sudo apt-get install -y --no-install-recommends r-base=4.5* r-base-dev=4.5*
 
 R --version | head -1
 
@@ -60,7 +60,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager", lib = lib)
 }
 library(BiocManager)
-BiocManager::install(version = "3.19", ask = FALSE, update = FALSE, lib = lib)
+BiocManager::install(version = "3.22", ask = FALSE, update = FALSE, lib = lib)
 
 # CRAN packages
 cran_pkgs <- c(

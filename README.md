@@ -127,7 +127,7 @@ postdoc_claude/
 | bedtools | apt |
 | vcftools | 0.1.16 |
 
-### R Packages (Bioconductor 3.19 / R 4.4.2)
+### R Packages (Bioconductor 3.22 / R 4.5.0)
 **Bulk RNA-seq:** DESeq2, edgeR, limma, tximport, tximeta
 **Single-cell:** Seurat, SingleCellExperiment, scran, scater, slingshot
 **Annotation:** clusterProfiler, fgsea, GSVA, org.Hs.eg.db, org.Mm.eg.db
