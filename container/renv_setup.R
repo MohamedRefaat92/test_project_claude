@@ -139,7 +139,7 @@ BiocManager::install(bioc_pkgs, ask = FALSE, update = FALSE)
 # CRAN single-cell packages (large; install after Bioconductor)
 # ---------------------------------------------------------------
 cat("\nInstalling Seurat...\n")
-install.packages(c("Seurat", "SeuratObject", "SeuratDisk"), ask = FALSE)
+install.packages(c("Seurat", "SeuratObject"), ask = FALSE)
 
 # ---------------------------------------------------------------
 # Verify all installations
