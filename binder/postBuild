@@ -7,15 +7,32 @@
 #
 # Scope: analysis-tier packages only (count matrix → results).
 # No alignment, variant calling, or large genome database packages.
+#
+# Note: postBuild runs as the unprivileged 'jovyan' user — no sudo available.
+# R packages must be installed into a user-writable directory.
 
 set -euo pipefail
 
 # ---------------------------------------------------------------
-# 1. Install R packages via Posit Package Manager (binary builds)
+# 1. Create a user-writable R library and point R to it
+#    /usr/local/lib/R/site-library is owned by root and not writable.
 # ---------------------------------------------------------------
-Rscript - <<'RSCRIPT'
+R_LIBS_DIR="${HOME}/R/library"
+mkdir -p "${R_LIBS_DIR}"
+export R_LIBS_USER="${R_LIBS_DIR}"
+
+# Persist R_LIBS_USER for interactive sessions inside the container
+echo "R_LIBS_USER=${R_LIBS_DIR}" >> "${HOME}/.Renviron"
+
+# ---------------------------------------------------------------
+# 2. Install R packages via Posit Package Manager (binary builds)
+# ---------------------------------------------------------------
+Rscript - <<RSCRIPT
+# User library is set via R_LIBS_USER env var above; R picks it up automatically.
+lib <- Sys.getenv("R_LIBS_USER")
+cat("Installing R packages into:", lib, "\n")
+
 options(
-  # Posit Package Manager: pre-built binaries for Ubuntu 22.04 (Jammy)
   repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"),
   Ncpus = 2,
   warn  = 1
@@ -23,9 +40,10 @@ options(
 
 # BiocManager — must be first
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
-  install.packages("BiocManager")
+  install.packages("BiocManager", lib = lib)
 }
-BiocManager::install(version = "3.19", ask = FALSE, update = FALSE)
+library(BiocManager)
+BiocManager::install(version = "3.19", ask = FALSE, update = FALSE, lib = lib)
 
 # CRAN packages
 cran_pkgs <- c(
@@ -39,7 +57,7 @@ cran_pkgs <- c(
   # Utilities
   "here", "BiocParallel"
 )
-install.packages(cran_pkgs, ask = FALSE)
+install.packages(cran_pkgs, lib = lib, ask = FALSE)
 
 # Bioconductor — analysis tier only
 bioc_pkgs <- c(
@@ -53,24 +71,31 @@ bioc_pkgs <- c(
   # Visualization
   "ComplexHeatmap", "EnhancedVolcano"
 )
-BiocManager::install(bioc_pkgs, ask = FALSE, update = FALSE)
+BiocManager::install(bioc_pkgs, lib = lib, ask = FALSE, update = FALSE)
 
 cat("R packages installed successfully.\n")
 RSCRIPT
 
 # ---------------------------------------------------------------
-# 2. Install Quarto CLI (standalone binary)
+# 3. Install Quarto CLI into ~/bin (no sudo needed)
 # ---------------------------------------------------------------
 QUARTO_VERSION="1.5.57"
+mkdir -p "${HOME}/bin"
+
 wget -q \
-    "https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}/quarto-${QUARTO_VERSION}-linux-amd64.deb" \
-    -O /tmp/quarto.deb
-sudo dpkg -i /tmp/quarto.deb
-rm /tmp/quarto.deb
+    "https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}/quarto-${QUARTO_VERSION}-linux-amd64.tar.gz" \
+    -O /tmp/quarto.tar.gz
+tar -xzf /tmp/quarto.tar.gz -C "${HOME}/bin" --strip-components=1
+rm /tmp/quarto.tar.gz
+
+# Add ~/bin to PATH for this session and future sessions
+export PATH="${HOME}/bin:${PATH}"
+echo 'export PATH="${HOME}/bin:${PATH}"' >> "${HOME}/.bashrc"
+
 quarto --version
 
 # ---------------------------------------------------------------
-# 3. Register the conda Python kernel in JupyterLab
+# 4. Register the conda Python kernel in JupyterLab
 # ---------------------------------------------------------------
 python -m ipykernel install --user \
     --name notebook \
