@@ -1,0 +1,176 @@
+name: Demo Workflow
+
+# Demonstrates GitHub Actions basics:
+#   - Triggered on push OR manually from the GitHub UI
+#   - Runs on Ubuntu, checks out the repo, inspects the environment,
+#     validates key project files, and posts a summary.
+#
+# This is NOT the container build — see build-container.yml for that.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/demo.yml'
+  workflow_dispatch:   # allows manual trigger from the Actions tab
+
+jobs:
+  validate-project:
+    name: Validate project structure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------
+      # Show the GitHub Actions environment
+      # ---------------------------------------------------------------
+      - name: Print runner environment
+        run: |
+          echo "=== Runner info ==="
+          echo "OS:        $(uname -a)"
+          echo "User:      $(whoami)"
+          echo "CPU cores: $(nproc)"
+          echo "RAM:       $(free -h | awk '/^Mem:/{print $2}')"
+          echo "Disk:      $(df -h / | awk 'NR==2{print $4}') free"
+          echo "GitHub SHA: ${GITHUB_SHA}"
+          echo "Triggered by: ${GITHUB_EVENT_NAME}"
+          echo "Actor:     ${GITHUB_ACTOR}"
+
+      # ---------------------------------------------------------------
+      # Verify all expected project files are present
+      # ---------------------------------------------------------------
+      - name: Validate project structure
+        run: |
+          echo "=== Checking required files ==="
+
+          REQUIRED=(
+            "container/bioinfo.def"
+            "container/environment.yml"
+            "container/renv_setup.R"
+            "binder/environment.yml"
+            "binder/apt.txt"
+            "binder/postBuild"
+            "binder/runtime.txt"
+            "scripts/build.sh"
+            "scripts/run_rstudio.sh"
+            "scripts/run_jupyter.sh"
+            "scripts/run_shell.sh"
+            ".github/workflows/build-container.yml"
+          )
+
+          ALL_OK=true
+          for f in "${REQUIRED[@]}"; do
+            if [[ -f "$f" ]]; then
+              echo "  [OK] $f"
+            else
+              echo "  [MISSING] $f"
+              ALL_OK=false
+            fi
+          done
+
+          if $ALL_OK; then
+            echo ""
+            echo "All required files present."
+          else
+            echo ""
+            echo "ERROR: Some files are missing." >&2
+            exit 1
+          fi
+
+      # ---------------------------------------------------------------
+      # Check scripts are executable
+      # ---------------------------------------------------------------
+      - name: Check script permissions
+        run: |
+          echo "=== Script permissions ==="
+          for f in scripts/*.sh binder/postBuild; do
+            if [[ -x "$f" ]]; then
+              echo "  [executable] $f"
+            else
+              echo "  [NOT executable] $f"
+              exit 1
+            fi
+          done
+
+      # ---------------------------------------------------------------
+      # Lint the conda environment.yml files
+      # ---------------------------------------------------------------
+      - name: Lint environment.yml files
+        run: |
+          pip install --quiet pyyaml
+
+          python3 - <<'EOF'
+          import yaml, sys
+
+          files = ["container/environment.yml", "binder/environment.yml"]
+          errors = []
+
+          for path in files:
+              with open(path) as f:
+                  try:
+                      doc = yaml.safe_load(f)
+                  except yaml.YAMLError as e:
+                      errors.append(f"{path}: YAML parse error: {e}")
+                      continue
+
+              # Check required keys
+              for key in ("name", "channels", "dependencies"):
+                  if key not in doc:
+                      errors.append(f"{path}: missing key '{key}'")
+
+              print(f"  [OK] {path}  (name={doc.get('name')}, "
+                    f"{len(doc.get('dependencies', []))} dependencies)")
+
+          if errors:
+              for e in errors:
+                  print(f"  [ERROR] {e}", file=sys.stderr)
+              sys.exit(1)
+          EOF
+
+      # ---------------------------------------------------------------
+      # Validate the Apptainer definition file (basic syntax check)
+      # ---------------------------------------------------------------
+      - name: Validate bioinfo.def structure
+        run: |
+          echo "=== Checking bioinfo.def sections ==="
+          REQUIRED_SECTIONS=("Bootstrap" "%labels" "%help" "%environment" "%post" "%files" "%runscript" "%test")
+
+          ALL_OK=true
+          for section in "${REQUIRED_SECTIONS[@]}"; do
+            if grep -q "^${section}" container/bioinfo.def; then
+              echo "  [OK] ${section}"
+            else
+              echo "  [MISSING] ${section}"
+              ALL_OK=false
+            fi
+          done
+
+          $ALL_OK || exit 1
+
+      # ---------------------------------------------------------------
+      # Post a rich summary to the Actions run page
+      # ---------------------------------------------------------------
+      - name: Write job summary
+        run: |
+          {
+            echo "## Project Validation Passed"
+            echo ""
+            echo "| Check | Result |"
+            echo "|-------|--------|"
+            echo "| Required files | ✅ All present |"
+            echo "| Script permissions | ✅ All executable |"
+            echo "| environment.yml (container) | ✅ Valid YAML |"
+            echo "| environment.yml (binder) | ✅ Valid YAML |"
+            echo "| bioinfo.def sections | ✅ All present |"
+            echo ""
+            echo "### Repo snapshot"
+            echo "\`\`\`"
+            find . -not -path './.git/*' -not -name '.gitkeep' | sort | head -40
+            echo "\`\`\`"
+            echo ""
+            echo "**Commit:** \`${GITHUB_SHA}\`  "
+            echo "**Triggered by:** \`${GITHUB_EVENT_NAME}\` from \`${GITHUB_ACTOR}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
