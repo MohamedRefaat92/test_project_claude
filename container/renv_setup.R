@@ -81,7 +81,6 @@ bioc_pkgs <- c(
   "DESeq2",
   "edgeR",
   "limma",
-  "voom",
   "tximport",
   "tximeta",
   "fishpond",

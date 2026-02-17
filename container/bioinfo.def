@@ -70,7 +70,7 @@ From: rocker/rstudio:4.5.0
         libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
         libgit2-dev libssh2-1-dev \
         libhdf5-dev libnetcdf-dev \
-        libgsl-dev libboost-all-dev \
+        libgsl-dev libboost-all-dev libglpk-dev \
         pigz pbzip2 parallel \
         samtools bcftools tabix \
         bedtools \
