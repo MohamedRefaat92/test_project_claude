@@ -52,12 +52,15 @@ cran_pkgs <- c(
   "data.table", "arrow", "openxlsx", "readxl", "writexl",
   "jsonlite", "yaml",
 
-  # Reproducibility
+  # Reproducibility & workflow
   "renv",
+  "targets",       # Make-like pipeline toolkit
+  "tarchetypes",   # Common targets patterns (tar_quarto, tar_rmarkdown, etc.)
+  "crew",          # Distributed targets workers
 
   # Reporting
   "rmarkdown", "knitr", "DT", "plotly", "htmlwidgets",
-  "flexdashboard",
+  "quarto",        # R interface to the Quarto CLI
 
   # Bioinformatics utilities (CRAN)
   "BiocParallel", "Matrix", "MatrixExtra",

@@ -133,6 +133,7 @@ postdoc_claude/
 **Annotation:** clusterProfiler, fgsea, GSVA, org.Hs.eg.db, org.Mm.eg.db
 **Genomics:** GenomicRanges, GenomicFeatures, Biostrings, VariantAnnotation
 **Visualization:** ggplot2, ComplexHeatmap, EnhancedVolcano, patchwork
+**Workflow & reporting:** targets, tarchetypes, crew, quarto, rmarkdown
 
 ### Python Packages (Python 3.11)
 **Single-cell:** scanpy, anndata, scvi-tools

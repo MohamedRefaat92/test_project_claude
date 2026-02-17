@@ -29,6 +29,7 @@ From: rocker/rstudio:4.4.2
       Single-cell:  Seurat, SingleCellExperiment, scran, scater
       Annotation:   clusterProfiler, fgsea, GSVA, org.Hs.eg.db
       Genomics:     GenomicRanges, VariantAnnotation, Biostrings
+      Workflow:     targets, tarchetypes, crew, quarto
 
     Python packages:
       Analysis:     scanpy, PyDESeq2, biopython, pysam, pybedtools
@@ -119,7 +120,18 @@ From: rocker/rstudio:4.4.2
     rm -rf /tmp/STAR /tmp/STAR.zip
 
     # ---------------------------------------------------------------
-    # 5. Trimmomatic (useful complement to Trim Galore / fastp)
+    # 5. Quarto CLI (standalone binary — not an R package)
+    # ---------------------------------------------------------------
+    QUARTO_VERSION="1.5.57"
+    wget -q \
+        "https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}/quarto-${QUARTO_VERSION}-linux-amd64.deb" \
+        -O /tmp/quarto.deb
+    dpkg -i /tmp/quarto.deb
+    rm /tmp/quarto.deb
+    quarto check
+
+    # ---------------------------------------------------------------
+    # 6. Trimmomatic (useful complement to Trim Galore / fastp)
     # ---------------------------------------------------------------
     TRIMMOMATIC_VERSION="0.39"
     wget -q \
@@ -133,13 +145,13 @@ From: rocker/rstudio:4.4.2
     rm /tmp/trimmomatic.zip
 
     # ---------------------------------------------------------------
-    # 6. R packages: Bioconductor + CRAN (pre-installed in image)
+    # 7. R packages: Bioconductor + CRAN (pre-installed in image)
     #    Per-project packages managed by renv on the host (bind-mount)
     # ---------------------------------------------------------------
     Rscript /opt/renv_setup.R
 
     # ---------------------------------------------------------------
-    # 7. Permissions
+    # 8. Permissions
     # ---------------------------------------------------------------
     chmod -R a+rX /opt/conda
     chmod -R a+rX /usr/local/bin/
@@ -170,4 +182,6 @@ From: rocker/rstudio:4.4.2
     kallisto version
     salmon --version
     jupyter --version
+    quarto --version
+    Rscript -e 'library(targets); library(tarchetypes); cat("targets OK\n")'
     echo "=== All smoke tests passed ==="
