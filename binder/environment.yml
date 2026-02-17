@@ -56,5 +56,53 @@ dependencies:
   - pyyaml=6.0.2
   - rich=13.7.1
 
+  # ── R stack ──────────────────────────────────────────────────
+  - r-base=4.4
+  - r-irkernel
+
+  # Tidyverse & visualization
+  - r-tidyverse
+  - r-ggrepel
+  - r-patchwork
+  - r-pheatmap
+  - r-rcolorbrewer
+  - r-viridis
+
+  # Workflow & reproducibility
+  - r-targets
+  - r-tarchetypes
+  - r-crew
+
+  # Reporting / interactivity
+  - r-rmarkdown
+  - r-knitr
+  - r-quarto
+  - r-dt
+  - r-jsonlite
+  - r-here
+
+  # Bioconductor — bulk RNA-seq
+  - bioconductor-deseq2
+  - bioconductor-edger
+  - bioconductor-limma
+  - bioconductor-tximport
+  - bioconductor-biocparallel
+
+  # Bioconductor — single-cell R
+  - bioconductor-singlecellexperiment
+  - bioconductor-scran
+  - bioconductor-scater
+
+  # Bioconductor — enrichment / pathway
+  - bioconductor-clusterprofiler
+  - bioconductor-fgsea
+  - bioconductor-enrichplot
+  - bioconductor-org.hs.eg.db
+  - bioconductor-org.mm.eg.db
+
+  # Bioconductor — visualization
+  - bioconductor-complexheatmap
+  - bioconductor-enhancedvolcano
+
   - pip:
     - pydeseq2==0.4.10
