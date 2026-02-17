@@ -14,7 +14,24 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------
-# 1. Create a user-writable R library and point R to it
+# 1. Install R 4.4 from Posit's CRAN apt repository
+#    Ubuntu 22.04 (Jammy) ships R 4.3 — we need R 4.4 to match
+#    the container and use Bioconductor 3.19.
+# ---------------------------------------------------------------
+wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
+    | gpg --dearmor \
+    | tee /etc/apt/trusted.gpg.d/cran_ubuntu_key.gpg > /dev/null
+
+echo "deb https://cloud.r-project.org/bin/linux/ubuntu jammy-cran44/" \
+    | tee /etc/apt/sources.list.d/cran-r44.list
+
+sudo apt-get update -qq
+sudo apt-get install -y --no-install-recommends r-base=4.4* r-base-dev=4.4*
+
+R --version | head -1
+
+# ---------------------------------------------------------------
+# 3. Create a user-writable R library and point R to it
 #    /usr/local/lib/R/site-library is owned by root and not writable.
 # ---------------------------------------------------------------
 R_LIBS_DIR="${HOME}/R/library"
@@ -25,7 +42,7 @@ export R_LIBS_USER="${R_LIBS_DIR}"
 echo "R_LIBS_USER=${R_LIBS_DIR}" >> "${HOME}/.Renviron"
 
 # ---------------------------------------------------------------
-# 2. Install R packages via Posit Package Manager (binary builds)
+# 4. Install R packages via Posit Package Manager (binary builds)
 # ---------------------------------------------------------------
 Rscript - <<RSCRIPT
 # User library is set via R_LIBS_USER env var above; R picks it up automatically.
@@ -33,7 +50,7 @@ lib <- Sys.getenv("R_LIBS_USER")
 cat("Installing R packages into:", lib, "\n")
 
 options(
-  repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/2024-10-28"),
+  repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"),
   Ncpus = 2,
   warn  = 1
 )
@@ -43,7 +60,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager", lib = lib)
 }
 library(BiocManager)
-BiocManager::install(version = "3.18", ask = FALSE, update = FALSE, lib = lib)
+BiocManager::install(version = "3.19", ask = FALSE, update = FALSE, lib = lib)
 
 # CRAN packages
 cran_pkgs <- c(
@@ -77,7 +94,7 @@ cat("R packages installed successfully.\n")
 RSCRIPT
 
 # ---------------------------------------------------------------
-# 3. Install Quarto CLI into ~/bin (no sudo needed)
+# 5. Install Quarto CLI into ~/bin (no sudo needed)
 # ---------------------------------------------------------------
 QUARTO_VERSION="1.5.57"
 mkdir -p "${HOME}/bin"
@@ -95,7 +112,7 @@ echo 'export PATH="${HOME}/bin:${PATH}"' >> "${HOME}/.bashrc"
 quarto --version
 
 # ---------------------------------------------------------------
-# 4. Register the conda Python kernel in JupyterLab
+# 6. Register the conda Python kernel in JupyterLab
 # ---------------------------------------------------------------
 python -m ipykernel install --user \
     --name notebook \
