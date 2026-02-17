@@ -97,9 +97,6 @@ dependencies:
   - bioconductor-clusterprofiler
   - bioconductor-fgsea
   - bioconductor-enrichplot
-  - bioconductor-org.hs.eg.db
-  - bioconductor-org.mm.eg.db
-
   # Bioconductor — visualization
   - bioconductor-complexheatmap
   - bioconductor-enhancedvolcano
