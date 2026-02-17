@@ -1,0 +1,60 @@
+# Binder-specific conda environment — lightweight subset of container/environment.yml
+#
+# This file is intentionally SEPARATE from container/environment.yml.
+# The full environment (aligners, heavy single-cell tools, etc.) lives in the
+# Apptainer .sif image. This file is scoped to downstream analysis of
+# pre-computed count matrices and results — no raw data preprocessing.
+#
+# Constraints: mybinder.org ~2 GB RAM, no GPU, ~10 min build budget.
+# Scope: exploration, code review, teaching, sharing results.
+
+name: notebook
+
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  # Python (pinned)
+  - python=3.11
+
+  # Jupyter stack (required for Binder)
+  - jupyterlab=4.2.5
+  - ipykernel=6.29.5
+  - ipywidgets=8.1.3
+  - nbformat=5.10.4
+  - nbconvert=7.16.4
+
+  # Core scientific Python
+  - numpy=1.26.4
+  - pandas=2.2.2
+  - scipy=1.14.0
+  - matplotlib=3.9.2
+  - seaborn=0.13.2
+  - scikit-learn=1.5.1
+  - statsmodels=0.14.2
+  - plotly=5.23.0
+
+  # Data I/O
+  - h5py=3.11.0
+  - pyarrow=17.0.0
+  - openpyxl=3.1.5
+
+  # Single-cell analysis (Python) — scanpy only; scvi-tools excluded (PyTorch ~700MB)
+  - scanpy=1.10.2
+  - anndata=0.10.8
+  - leidenalg=0.10.2
+  - igraph=0.11.6
+
+  # Bioinformatics Python (analysis tier only — no alignment tools)
+  - biopython=1.84
+  - htseq=2.0.5
+
+  # Utilities
+  - tqdm=4.66.5
+  - pyyaml=6.0.2
+  - rich=13.7.1
+
+  - pip:
+    - pydeseq2==0.4.10

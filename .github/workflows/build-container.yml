@@ -1,0 +1,169 @@
+name: Build Singularity Container
+
+# Rebuild the .sif image and push to GHCR whenever the container
+# definition or its direct inputs change.
+#
+# Pull the built image with:
+#   apptainer pull bioinfo_latest.sif oras://ghcr.io/mohamedrefaat92/test_project_claude/bioinfo:latest
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'container/bioinfo.def'
+      - 'container/environment.yml'
+      - 'container/renv_setup.R'
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild (ignores path filter)'
+        required: false
+        default: 'false'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/bioinfo
+  SIF_FILE: bioinfo_latest.sif
+
+jobs:
+  build-and-push:
+    name: Build .sif and push to GHCR
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install Apptainer from the official .deb release
+      - name: Install Apptainer
+        run: |
+          wget -q \
+            "https://github.com/apptainer/apptainer/releases/download/v1.3.4/apptainer_1.3.4_amd64.deb" \
+            -O /tmp/apptainer.deb
+          sudo apt-get install -y /tmp/apptainer.deb
+          apptainer --version
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          SHORT_SHA="${GITHUB_SHA::8}"
+          echo "short_sha=${SHORT_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "image_uri=${REGISTRY}/${IMAGE_NAME}" >> "${GITHUB_OUTPUT}"
+
+      # Cache the Apptainer layer cache keyed on bioinfo.def content hash.
+      # On a cache hit, pulling base layers is skipped, saving ~5-10 min.
+      - name: Restore Apptainer build cache
+        uses: actions/cache@v4
+        with:
+          path: .singularity_cache
+          key: apptainer-${{ hashFiles('container/bioinfo.def', 'container/environment.yml') }}
+          restore-keys: |
+            apptainer-
+
+      - name: Build Singularity image
+        env:
+          APPTAINER_CACHEDIR: ${{ github.workspace }}/.singularity_cache
+          SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity_cache
+        run: |
+          # Build must run from repo root — %files paths are relative to it
+          time apptainer build \
+            --fakeroot \
+            --force \
+            "${SIF_FILE}" \
+            container/bioinfo.def
+
+          ls -lh "${SIF_FILE}"
+
+      - name: Smoke tests
+        run: |
+          echo "=== Smoke tests ==="
+          apptainer exec "${SIF_FILE}" R --version | head -1
+          apptainer exec "${SIF_FILE}" python3 --version
+          apptainer exec "${SIF_FILE}" samtools --version | head -1
+          apptainer exec "${SIF_FILE}" STAR --version
+          apptainer exec "${SIF_FILE}" kallisto version
+          apptainer exec "${SIF_FILE}" salmon --version
+          echo "=== All smoke tests passed ==="
+
+      # Push .sif as an OCI artifact using ORAS.
+      # Pull with: apptainer pull oras://ghcr.io/OWNER/REPO/bioinfo:latest
+      - name: Install ORAS CLI
+        run: |
+          wget -q \
+            "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz" \
+            -O /tmp/oras.tar.gz
+          tar -xzf /tmp/oras.tar.gz -C /tmp/
+          sudo install -m 755 /tmp/oras /usr/local/bin/oras
+
+      - name: Push .sif to GHCR
+        run: |
+          URI="${{ steps.tags.outputs.image_uri }}"
+          SHA="${{ steps.tags.outputs.short_sha }}"
+
+          oras push \
+            --config /dev/null:application/vnd.oci.image.config.v1+json \
+            "${URI}:${SHA}" \
+            "${SIF_FILE}:application/vnd.sylabs.sif.layer.v1.sif"
+
+          oras push \
+            --config /dev/null:application/vnd.oci.image.config.v1+json \
+            "${URI}:latest" \
+            "${SIF_FILE}:application/vnd.sylabs.sif.layer.v1.sif"
+
+          echo "Pushed to:"
+          echo "  oras://ghcr.io/${URI}:${SHA}"
+          echo "  oras://ghcr.io/${URI}:latest"
+
+      # Export the fully-resolved conda lockfile from the built image.
+      # Commit container/conda_explicit_spec.txt for bit-identical future rebuilds.
+      - name: Export conda explicit spec
+        run: |
+          apptainer exec "${SIF_FILE}" \
+            /opt/conda/bin/conda list --name bioinfo --explicit \
+            > container/conda_explicit_spec.txt
+
+      - name: Upload .sif as workflow artifact (30 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bioinfo-sif-${{ steps.tags.outputs.short_sha }}
+          path: ${{ env.SIF_FILE }}
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload conda lockfile as workflow artifact (90 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: conda-lockfile-${{ steps.tags.outputs.short_sha }}
+          path: container/conda_explicit_spec.txt
+          retention-days: 90
+
+      - name: Job summary
+        run: |
+          URI="${{ steps.tags.outputs.image_uri }}"
+          SHA="${{ steps.tags.outputs.short_sha }}"
+          SIZE=$(ls -lh "${SIF_FILE}" | awk '{print $5}')
+          {
+            echo "## Container Build"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| SHA tag | \`oras://ghcr.io/${URI}:${SHA}\` |"
+            echo "| Latest tag | \`oras://ghcr.io/${URI}:latest\` |"
+            echo "| Image size | ${SIZE} |"
+            echo ""
+            echo "**Pull command:**"
+            echo "\`\`\`bash"
+            echo "apptainer pull bioinfo_latest.sif oras://ghcr.io/${URI}:latest"
+            echo "\`\`\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

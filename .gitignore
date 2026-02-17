@@ -1,0 +1,46 @@
+# Apptainer/Singularity images (large binary files — store in registry or shared storage)
+*.sif
+*.img
+bioinfo_sandbox/
+
+# Build cache
+.singularity_cache/
+
+# Runtime temp files
+.rstudio_tmp/
+
+# R project caches (renv manages its own lockfile — commit renv.lock, not the library)
+projects/*/renv/library/
+projects/*/renv/staging/
+projects/*/renv/python/
+projects/*/.Rproj.user/
+projects/*/.Rhistory
+projects/*/.RData
+
+# Conda lockfiles are committed; package cache is not
+cache/
+!cache/.gitkeep
+
+# Data files (usually too large for git — use DVC or note in README)
+data/
+!data/.gitkeep
+
+# Common editor / OS artifacts
+.DS_Store
+.vscode/
+*.swp
+*.swo
+*~
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Jupyter runtime
+.jupyter/
+
+# Secrets (never commit these)
+.env
+secrets.txt
+*.key
+*.pem

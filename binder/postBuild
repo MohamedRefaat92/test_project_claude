@@ -1,0 +1,66 @@
+#!/bin/bash
+# postBuild — executed by repo2docker after conda environment install
+#
+# Installs R packages using Posit Package Manager (pre-built binaries for Ubuntu Jammy).
+# Binary packages are critical: compiling DESeq2 from source takes 20+ min
+# and will exceed mybinder.org's build time budget.
+#
+# Scope: analysis-tier packages only (count matrix → results).
+# No alignment, variant calling, or large genome database packages.
+
+set -euo pipefail
+
+# ---------------------------------------------------------------
+# 1. Install R packages via Posit Package Manager (binary builds)
+# ---------------------------------------------------------------
+Rscript - <<'RSCRIPT'
+options(
+  # Posit Package Manager: pre-built binaries for Ubuntu 22.04 (Jammy)
+  repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"),
+  Ncpus = 2,
+  warn  = 1
+)
+
+# BiocManager — must be first
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install(version = "3.19", ask = FALSE, update = FALSE)
+
+# CRAN packages
+cran_pkgs <- c(
+  # Tidyverse
+  "tidyverse", "ggplot2", "dplyr", "tidyr", "ggrepel",
+  "patchwork", "pheatmap", "RColorBrewer", "viridis",
+  # Reporting / interactivity
+  "rmarkdown", "knitr", "DT", "jsonlite",
+  # Utilities
+  "here", "BiocParallel"
+)
+install.packages(cran_pkgs, ask = FALSE)
+
+# Bioconductor — analysis tier only
+bioc_pkgs <- c(
+  # Bulk RNA-seq
+  "DESeq2", "edgeR", "limma", "tximport",
+  # Single-cell R
+  "SingleCellExperiment", "scran", "scater",
+  # Enrichment / pathway
+  "clusterProfiler", "fgsea", "enrichplot",
+  "org.Hs.eg.db", "org.Mm.eg.db",
+  # Visualization
+  "ComplexHeatmap", "EnhancedVolcano"
+)
+BiocManager::install(bioc_pkgs, ask = FALSE, update = FALSE)
+
+cat("R packages installed successfully.\n")
+RSCRIPT
+
+# ---------------------------------------------------------------
+# 2. Register the conda Python kernel in JupyterLab
+# ---------------------------------------------------------------
+python -m ipykernel install --user \
+    --name notebook \
+    --display-name "Python (bioinfo-lite)"
+
+echo "postBuild complete."
