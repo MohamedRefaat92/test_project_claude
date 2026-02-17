@@ -105,7 +105,7 @@ dependencies:
   - pyyaml=6.0.2
   - rich=13.7.1
   - click=8.1.7
-  - pip
+  - pip=26.0.1
 
   # pip-only packages (not available on conda-forge/bioconda)
   - pip:
