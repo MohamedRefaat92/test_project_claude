@@ -23,7 +23,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/bioinfo
+  IMAGE_NAME: mohamedrefaat92/bioinfo
   SIF_FILE: bioinfo_latest.sif
 
 jobs:
