@@ -54,6 +54,7 @@ From: rocker/rstudio:4.5.0
     export TZ=UTC
 
 %post
+    #!/bin/bash
     set -euo pipefail
     export DEBIAN_FRONTEND=noninteractive
     export TZ=UTC
