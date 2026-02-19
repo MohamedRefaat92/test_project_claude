@@ -53,9 +53,15 @@ PROJECTS_DIR="${BIND_PROJECTS:-${REPO_ROOT}/projects}"
 DATA_DIR="${BIND_DATA:-${REPO_ROOT}/data}"
 R_LIBS_DIR="${REPO_ROOT}/cache/r_libs"
 
-# RStudio Server needs a writable tmp area for its runtime files
-RSTUDIO_TMP="${REPO_ROOT}/.rstudio_tmp"
-mkdir -p "${RSTUDIO_TMP}" "${R_LIBS_DIR}"
+# RStudio Server needs writable runtime dirs; use a single tmpfs overlay
+# rather than enumerating individual /var/* paths.
+# Pre-create dirs that rserver needs so it doesn't try to chmod them.
+RSTUDIO_VAR="${REPO_ROOT}/.rstudio_var"
+RSTUDIO_RUN="${REPO_ROOT}/.rstudio_run"
+mkdir -p "${RSTUDIO_VAR}" "${RSTUDIO_RUN}" "${R_LIBS_DIR}"
+# Pre-create the sqlite file so rserver skips the chmod call
+touch "${RSTUDIO_VAR}/rstudio-os.sqlite"
+chmod 600 "${RSTUDIO_VAR}/rstudio-os.sqlite"
 
 # ---------------------------------------------------------------
 # Check port availability
@@ -83,10 +89,12 @@ echo "  Press Ctrl+C to stop."
 echo ""
 
 exec ${SNG} exec \
+    --writable-tmpfs \
     --bind "${PROJECTS_DIR}:/home/rstudio/projects" \
     --bind "${DATA_DIR}:/home/rstudio/data" \
     --bind "${R_LIBS_DIR}:/home/rstudio/.R/library" \
-    --bind "${RSTUDIO_TMP}:/tmp/rstudio-server" \
+    --bind "${RSTUDIO_VAR}:/var/lib/rstudio-server" \
+    --bind "${RSTUDIO_RUN}:/var/run/rstudio-server" \
     --bind /tmp:/tmp \
     --env "PASSWORD=${PASSWORD}" \
     --env "RSTUDIO_SESSION_TIMEOUT=0" \
@@ -98,6 +106,7 @@ exec ${SNG} exec \
         --www-port="${PORT}" \
         --server-daemonize=0 \
         --server-app-armor-enabled=0 \
+        --server-user="$(whoami)" \
         --auth-none=0 \
         --auth-pam-helper-path=/usr/lib/rstudio-server/bin/pam-helper \
         --rsession-which-r=/usr/local/bin/R

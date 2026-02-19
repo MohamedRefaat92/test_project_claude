@@ -18,7 +18,7 @@ cat(paste("Date:", Sys.time(), "\n\n"))
 # CRAN mirror and options
 # ---------------------------------------------------------------
 options(
-  repos          = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"),
+  repos          = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/noble/latest"),
   Ncpus          = parallel::detectCores(),   # parallel compilation
   install.packages.compile.from.source = "always"
 )
@@ -118,7 +118,7 @@ for (p in all_pkgs) {
 }
 
 if (length(missing) > 0) {
-  warning(paste("Missing packages:", paste(missing, collapse = ", ")))
+  stop(paste("Missing packages:", paste(missing, collapse = ", ")))
 } else {
   cat("\nAll packages installed successfully.\n")
 }
