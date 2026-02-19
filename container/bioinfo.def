@@ -3,45 +3,25 @@ From: rocker/rstudio:4.5.0
 
 %labels
     Author      Mohamed Shoeb
-    Version     1.1.1
-    Description Bioinformatics container: RStudio Server + JupyterLab + common tools
+    Version     1.0.0-r-only
+    Description Bioinformatics container: RStudio Server + Quarto + R single-cell & pathway analysis
     R_Version   4.5.0
-    Python      3.11 (via Mambaforge)
-    Build_Date  2026-02-17
+    Build_Date  2026-02-19
 
 %help
-    This container provides a reproducible bioinformatics analysis environment:
+    This container provides a reproducible R-based bioinformatics analysis environment:
 
     Services:
       - RStudio Server  (port 8787)  →  ./scripts/run_rstudio.sh
-      - JupyterLab      (port 8888)  →  ./scripts/run_jupyter.sh
       - Interactive shell            →  ./scripts/run_shell.sh
 
-    Included bioinformatics tools:
-      Aligners:     STAR 2.7.11b, HISAT2, bowtie2, minimap2
-      Quantifiers:  kallisto, salmon, featureCounts (subread)
-      Variant:      bcftools, vcftools, PLINK
-      QC/Trim:      FastQC, MultiQC, fastp, Trim Galore, cutadapt
-      Utilities:    samtools, bedtools, tabix, mosdepth
-
     R packages (Bioconductor 3.22):
-      RNA-seq:      DESeq2, edgeR, limma, tximport
-      Single-cell:  Seurat, SingleCellExperiment, scran, scater
-      Annotation:   clusterProfiler, fgsea, GSVA, org.Hs.eg.db
-      Genomics:     GenomicRanges, VariantAnnotation, Biostrings
-      Workflow:     targets, tarchetypes, crew, quarto
-
-    Python packages:
-      Analysis:     scanpy, PyDESeq2, biopython, pysam, pybedtools
-      ML:           scikit-learn, scipy, statsmodels
-      Workflow:     snakemake, papermill
+      Single-cell:  Seurat, SingleCellExperiment, scran, scater, slingshot, scDblFinder
+      Pathway:      clusterProfiler, fgsea, GSVA, enrichplot, ReactomePA
+      Workflow:     targets, tarchetypes, crew, quarto, rmarkdown
+      Tidyverse:    tidyverse, ggplot2, patchwork, pheatmap, viridis, ...
 
 %environment
-    # Conda / Python
-    export MAMBA_ROOT_PREFIX=/opt/conda
-    export PATH=/opt/conda/envs/bioinfo/bin:/opt/conda/bin:$PATH
-    export CONDA_DEFAULT_ENV=bioinfo
-
     # Locale
     export LANG=en_US.UTF-8
     export LC_ALL=en_US.UTF-8
@@ -71,10 +51,6 @@ From: rocker/rstudio:4.5.0
         libgit2-dev libssh2-1-dev \
         libhdf5-dev libnetcdf-dev \
         libgsl-dev libboost-all-dev libglpk-dev \
-        pigz pbzip2 parallel \
-        samtools bcftools tabix \
-        bedtools \
-        fastqc \
         perl \
         locales tzdata \
         procps htop less tree \
@@ -84,43 +60,7 @@ From: rocker/rstudio:4.5.0
     && rm -rf /var/lib/apt/lists/*
 
     # ---------------------------------------------------------------
-    # 2. Install Mambaforge (fast conda resolver)
-    # ---------------------------------------------------------------
-    MAMBA_VERSION="23.11.0-0"
-    wget -q \
-        "https://github.com/conda-forge/miniforge/releases/download/${MAMBA_VERSION}/Mambaforge-${MAMBA_VERSION}-Linux-x86_64.sh" \
-        -O /tmp/mambaforge.sh
-    bash /tmp/mambaforge.sh -b -p /opt/conda
-    rm /tmp/mambaforge.sh
-
-    # Initialize for bash (affects future shell sessions inside container)
-    /opt/conda/bin/conda init bash
-
-    # ---------------------------------------------------------------
-    # 3. Create pinned conda environment from environment.yml
-    # ---------------------------------------------------------------
-    /opt/conda/bin/mamba env create -f /opt/environment.yml
-    /opt/conda/bin/conda clean -afy
-
-    # Register Jupyter kernel
-    /opt/conda/envs/bioinfo/bin/python -m ipykernel install \
-        --name bioinfo \
-        --display-name "Python (bioinfo)" \
-        --prefix /opt/conda/envs/bioinfo
-
-    # ---------------------------------------------------------------
-    # 4. STAR aligner (binary build - avoids conda version lag)
-    # ---------------------------------------------------------------
-    STAR_VERSION="2.7.11b"
-    wget -q \
-        "https://github.com/alexdobin/STAR/releases/download/${STAR_VERSION}/STAR_${STAR_VERSION}.zip" \
-        -O /tmp/STAR.zip
-    unzip -q /tmp/STAR.zip -d /tmp/STAR
-    install -m 755 /tmp/STAR/STAR_${STAR_VERSION}/Linux_x86_64_static/STAR /usr/local/bin/STAR
-    rm -rf /tmp/STAR /tmp/STAR.zip
-
-    # ---------------------------------------------------------------
-    # 5. Quarto CLI (standalone binary — not an R package)
+    # 2. Quarto CLI (standalone binary — not an R package)
     # ---------------------------------------------------------------
     QUARTO_VERSION="1.5.57"
     wget -q \
@@ -131,42 +71,25 @@ From: rocker/rstudio:4.5.0
     quarto check
 
     # ---------------------------------------------------------------
-    # 6. Trimmomatic (useful complement to Trim Galore / fastp)
-    # ---------------------------------------------------------------
-    TRIMMOMATIC_VERSION="0.39"
-    wget -q \
-        "http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-${TRIMMOMATIC_VERSION}.zip" \
-        -O /tmp/trimmomatic.zip
-    unzip -q /tmp/trimmomatic.zip -d /opt/
-    printf '#!/bin/bash\nexec java -jar /opt/Trimmomatic-%s/trimmomatic-%s.jar "$@"\n' \
-        "${TRIMMOMATIC_VERSION}" "${TRIMMOMATIC_VERSION}" \
-        > /usr/local/bin/trimmomatic
-    chmod +x /usr/local/bin/trimmomatic
-    rm /tmp/trimmomatic.zip
-
-    # ---------------------------------------------------------------
-    # 7. R packages: Bioconductor + CRAN (pre-installed in image)
+    # 3. R packages: Bioconductor + CRAN (pre-installed in image)
     #    Per-project packages managed by renv on the host (bind-mount)
     # ---------------------------------------------------------------
     Rscript /opt/renv_setup.R
 
     # ---------------------------------------------------------------
-    # 8. Permissions
+    # 4. Permissions
     # ---------------------------------------------------------------
-    chmod -R a+rX /opt/conda
     chmod -R a+rX /usr/local/bin/
 
 %files
     # Files must exist at build time relative to the build context (repo root)
-    container/environment.yml  /opt/environment.yml
     container/renv_setup.R     /opt/renv_setup.R
 
 %runscript
-    echo "Bioinformatics container (RStudio Server + JupyterLab)"
+    echo "R-only bioinformatics container (RStudio Server + Quarto)"
     echo ""
     echo "Usage:"
     echo "  RStudio Server:  ./scripts/run_rstudio.sh"
-    echo "  JupyterLab:      ./scripts/run_jupyter.sh"
     echo "  Shell:           ./scripts/run_shell.sh"
     echo "  or:              singularity shell bioinfo_latest.sif"
 
@@ -174,14 +97,9 @@ From: rocker/rstudio:4.5.0
     # Smoke tests executed at build time with 'singularity build --test'
     echo "=== Smoke Tests ==="
     R --version | head -1
-    python3 --version
-    STAR --version
-    samtools --version | head -1
-    bedtools --version | head -1
-    hisat2 --version | head -1
-    kallisto version
-    salmon --version
-    jupyter --version
     quarto --version
+    Rscript -e 'library(Seurat); cat("Seurat OK\n")'
+    Rscript -e 'library(scran); cat("scran OK\n")'
+    Rscript -e 'library(clusterProfiler); cat("clusterProfiler OK\n")'
     Rscript -e 'library(targets); library(tarchetypes); cat("targets OK\n")'
     echo "=== All smoke tests passed ==="

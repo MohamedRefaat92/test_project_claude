@@ -40,17 +40,13 @@ cran_pkgs <- c(
   "purrr", "forcats", "stringr", "lubridate",
 
   # Visualization
-  "ggrepel", "ggpubr", "patchwork", "cowplot",
+  "ggrepel", "patchwork", "cowplot",
   "pheatmap", "RColorBrewer", "viridis", "viridisLite",
   "scales", "ggridges", "ggbeeswarm",
 
-  # Statistics
-  "lme4", "lmerTest", "emmeans", "broom", "broom.mixed",
-  "survival", "survminer",
-
   # Data I/O
-  "data.table", "arrow", "openxlsx", "readxl", "writexl",
-  "jsonlite", "yaml",
+  "data.table", "openxlsx", "readxl", "writexl",
+  "jsonlite", "yaml", "Matrix",
 
   # Reproducibility & workflow
   "renv",
@@ -62,8 +58,7 @@ cran_pkgs <- c(
   "rmarkdown", "knitr", "DT", "plotly", "htmlwidgets",
   "quarto",        # R interface to the Quarto CLI
 
-  # Bioinformatics utilities (CRAN)
-  "BiocParallel", "Matrix", "MatrixExtra",
+  # Single-cell utilities (CRAN)
   "Rtsne", "umap",
 
   # Misc
@@ -77,14 +72,6 @@ install.packages(cran_pkgs, ask = FALSE, quiet = FALSE)
 # Bioconductor packages
 # ---------------------------------------------------------------
 bioc_pkgs <- c(
-  # Bulk RNA-seq
-  "DESeq2",
-  "edgeR",
-  "limma",
-  "tximport",
-  "tximeta",
-  "fishpond",
-
   # Single-cell RNA-seq
   "SingleCellExperiment",
   "scran",
@@ -94,24 +81,6 @@ bioc_pkgs <- c(
   "scDblFinder",
   "slingshot",
 
-  # Genomic ranges / intervals
-  "GenomicRanges",
-  "GenomicFeatures",
-  "GenomicAlignments",
-  "IRanges",
-  "rtracklayer",
-  "Rsamtools",
-
-  # Annotation
-  "AnnotationDbi",
-  "org.Hs.eg.db",
-  "org.Mm.eg.db",
-  "TxDb.Hsapiens.UCSC.hg38.knownGene",
-  "TxDb.Mmusculus.UCSC.mm39.knownGene",
-  "EnsDb.Hsapiens.v86",
-  "BSgenome",
-  "Biostrings",
-
   # Pathway / enrichment analysis
   "clusterProfiler",
   "enrichplot",
@@ -120,16 +89,10 @@ bioc_pkgs <- c(
   "msigdbr",
   "ReactomePA",
 
-  # Variant analysis
-  "VariantAnnotation",
-
   # Visualization
   "ComplexHeatmap",
   "InteractiveComplexHeatmap",
-  "EnhancedVolcano",
-
-  # QC
-  "FastqCleaner"
+  "EnhancedVolcano"
 )
 
 cat("\nInstalling Bioconductor packages...\n")
