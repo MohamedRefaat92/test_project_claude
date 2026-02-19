@@ -89,12 +89,14 @@ jobs:
       - name: Smoke tests
         run: |
           echo "=== Smoke tests ==="
-          apptainer exec "${SIF_FILE}" R --version | head -1
-          apptainer exec "${SIF_FILE}" quarto --version
-          apptainer exec "${SIF_FILE}" Rscript -e 'library(Seurat); cat("Seurat OK\n")'
-          apptainer exec "${SIF_FILE}" Rscript -e 'library(scran); cat("scran OK\n")'
-          apptainer exec "${SIF_FILE}" Rscript -e 'library(clusterProfiler); cat("clusterProfiler OK\n")'
-          apptainer exec "${SIF_FILE}" Rscript -e 'library(targets); library(tarchetypes); cat("targets OK\n")'
+          # --contain isolates the container from host libraries,
+          # preventing shared library version mismatches (e.g. libicu)
+          apptainer exec --contain "${SIF_FILE}" R --version | head -1
+          apptainer exec --contain "${SIF_FILE}" quarto --version
+          apptainer exec --contain "${SIF_FILE}" Rscript -e 'library(Seurat); cat("Seurat OK\n")'
+          apptainer exec --contain "${SIF_FILE}" Rscript -e 'library(scran); cat("scran OK\n")'
+          apptainer exec --contain "${SIF_FILE}" Rscript -e 'library(clusterProfiler); cat("clusterProfiler OK\n")'
+          apptainer exec --contain "${SIF_FILE}" Rscript -e 'library(targets); library(tarchetypes); cat("targets OK\n")'
           echo "=== All smoke tests passed ==="
 
       # Push .sif as an OCI artifact using ORAS.
