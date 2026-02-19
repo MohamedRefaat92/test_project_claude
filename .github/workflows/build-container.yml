@@ -68,7 +68,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .singularity_cache
-          key: apptainer-${{ hashFiles('container/bioinfo.def', 'container/environment.yml') }}
+          key: apptainer-${{ hashFiles('container/bioinfo.def', 'container/renv_setup.R') }}
           restore-keys: |
             apptainer-
 
@@ -90,11 +90,11 @@ jobs:
         run: |
           echo "=== Smoke tests ==="
           apptainer exec "${SIF_FILE}" R --version | head -1
-          apptainer exec "${SIF_FILE}" python3 --version
-          apptainer exec "${SIF_FILE}" samtools --version | head -1
-          apptainer exec "${SIF_FILE}" STAR --version
-          apptainer exec "${SIF_FILE}" kallisto version
-          apptainer exec "${SIF_FILE}" salmon --version
+          apptainer exec "${SIF_FILE}" quarto --version
+          apptainer exec "${SIF_FILE}" Rscript -e 'library(Seurat); cat("Seurat OK\n")'
+          apptainer exec "${SIF_FILE}" Rscript -e 'library(scran); cat("scran OK\n")'
+          apptainer exec "${SIF_FILE}" Rscript -e 'library(clusterProfiler); cat("clusterProfiler OK\n")'
+          apptainer exec "${SIF_FILE}" Rscript -e 'library(targets); library(tarchetypes); cat("targets OK\n")'
           echo "=== All smoke tests passed ==="
 
       # Push .sif as an OCI artifact using ORAS.
@@ -126,14 +126,6 @@ jobs:
           echo "  oras://ghcr.io/${URI}:${SHA}"
           echo "  oras://ghcr.io/${URI}:latest"
 
-      # Export the fully-resolved conda lockfile from the built image.
-      # Commit container/conda_explicit_spec.txt for bit-identical future rebuilds.
-      - name: Export conda explicit spec
-        run: |
-          apptainer exec "${SIF_FILE}" \
-            /opt/conda/bin/conda list --name bioinfo --explicit \
-            > container/conda_explicit_spec.txt
-
       - name: Upload .sif as workflow artifact (30 days)
         uses: actions/upload-artifact@v4
         with:
@@ -141,13 +133,6 @@ jobs:
           path: ${{ env.SIF_FILE }}
           retention-days: 30
           if-no-files-found: error
-
-      - name: Upload conda lockfile as workflow artifact (90 days)
-        uses: actions/upload-artifact@v4
-        with:
-          name: conda-lockfile-${{ steps.tags.outputs.short_sha }}
-          path: container/conda_explicit_spec.txt
-          retention-days: 90
 
       - name: Job summary
         run: |
