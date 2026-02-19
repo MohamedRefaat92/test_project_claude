@@ -52,6 +52,7 @@ From: rocker/rstudio:4.5.0
         libgit2-dev libssh2-1-dev \
         libhdf5-dev libnetcdf-dev \
         libgsl-dev libboost-all-dev libglpk-dev \
+        libmagick++-dev \
         perl \
         locales tzdata \
         procps htop less tree \

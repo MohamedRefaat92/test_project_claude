@@ -66,6 +66,9 @@ cran_pkgs <- c(
 )
 
 cat("Installing CRAN packages...\n")
+# magick must compile from source to link against the system ImageMagick;
+# the noble binary from Posit PM expects libMagick++-6 which may not match.
+install.packages("magick", ask = FALSE, type = "source")
 install.packages(cran_pkgs, ask = FALSE, quiet = FALSE)
 
 # ---------------------------------------------------------------
